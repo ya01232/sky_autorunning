@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-
 import time
 import subprocess
 import sys
 import os
 import cv2
+import json
 
 
 # 全局变量存储当前模板的坐标
 GLOBAL_X = None
 GLOBAL_Y = None
 # 目标设备
-DEVICE = "127.0.0.1:16384"
+DEVICE = os.getenv("DEVICE", "127.0.0.1:16384")
 # 匹配阈值
 FIXED_THRESHOLD = 0.25
 
@@ -32,12 +32,7 @@ def take_screenshot():
 
 
 def get_xy(img_model_path, retry=2):
-    """
-    匹配模板（使用固定阈值）并支持重试机制
-    :param img_model_path: 模板路径
-    :param retry: 匹配失败重试次数
-    :return: 坐标或None
-    """
+    """匹配模板（使用固定阈值）并支持重试机制"""
     global GLOBAL_X, GLOBAL_Y
     img_path = "./screenshot.png"
     full_model_path = os.path.join("./ui/", img_model_path)
@@ -86,12 +81,7 @@ def get_xy(img_model_path, retry=2):
 
 
 def process_templates(template_list, click_after_match=False):
-    """
-    依次处理模板（使用固定阈值）
-    :param template_list: 模板列表
-    :param click_after_match: 是否点击
-    :return: 结果字典
-    """
+    """依次处理模板（使用固定阈值）"""
     result_dict = {}
     print(f"使用ADB连接设备：{DEVICE}，匹配阈值：{FIXED_THRESHOLD}")
     
@@ -103,7 +93,7 @@ def process_templates(template_list, click_after_match=False):
             continue
         
         # 2. 使用固定阈值匹配（支持重试）
-        coord = get_xy(template, retry=1)  # 可根据需要调整重试次数
+        coord = get_xy(template, retry=1)
         result_dict[template] = coord
             
     return result_dict
@@ -128,12 +118,10 @@ if __name__ == "__main__":
     print("\n所有模板识别结果：")
     for name, coord in results.items():
         print(f"{name}: {coord}")
-        # 将坐标写入环境变量，格式为<TEMPLATE_NAME>_X和<TEMPLATE_NAME>_Y
         if coord:
-            x_key = f"{name}_X"
-            y_key = f"{name}_Y"
-            os.environ[x_key] = str(coord[0])
-            os.environ[y_key] = str(coord[1])
-            print(f"识别成功 {x_key}={coord[0]}, {y_key}={coord[1]}")
+            print(f"识别成功 {name}_X={coord[0]}, {name}_Y={coord[1]}")
         else:
             print(f"{name} 未匹配到坐标")
+    
+    # 将结果以JSON格式输出到stdout，供main.py读取
+    print(json.dumps(results))
