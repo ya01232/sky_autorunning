@@ -10,7 +10,7 @@ import cv2
 # 全局变量存储当前模板的坐标
 GLOBAL_X = None
 GLOBAL_Y = None
-# 目标设备序列号
+# 目标设备
 DEVICE = "127.0.0.1:16384"
 # 匹配阈值
 FIXED_THRESHOLD = 0.25
@@ -110,15 +110,30 @@ def process_templates(template_list, click_after_match=False):
 
 
 if __name__ == "__main__":
-    templates_to_process = [
-        "1.png",
-    ]
+    # 从环境变量muban读取模板列表，使用逗号分隔多个模板
+    template_env = os.getenv('muban', '')
+    if not template_env:
+        print("环境变量未设置")
+        templates_to_process = ["1.png"]
+    else:
+        # 分割环境变量值为模板列表（去除可能的空格）
+        templates_to_process = [t.strip() for t in template_env.split(',') if t.strip()]
+        print(f"从环境变量获取模板列表：{templates_to_process}")
     
     results = process_templates(
         template_list=templates_to_process,
         click_after_match=True
     )
     
-    print("\n 所有模板识别结果：")
+    print("\n所有模板识别结果：")
     for name, coord in results.items():
         print(f"{name}: {coord}")
+        # 将坐标写入环境变量，格式为<TEMPLATE_NAME>_X和<TEMPLATE_NAME>_Y
+        if coord:
+            x_key = f"{name}_X"
+            y_key = f"{name}_Y"
+            os.environ[x_key] = str(coord[0])
+            os.environ[y_key] = str(coord[1])
+            print(f"识别成功 {x_key}={coord[0]}, {y_key}={coord[1]}")
+        else:
+            print(f"{name} 未匹配到坐标")

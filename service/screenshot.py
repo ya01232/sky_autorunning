@@ -1,6 +1,8 @@
 import subprocess
 import os
 
+DEVICE = os.getenv("DEVICE", "127.0.0.1:16384")
+
 def adb_screenshot(save_path="screen.png", device="127.0.0.1:16384"):
     """
     通过ADB截取指定安卓设备屏幕并保存到本地指定路径
@@ -15,7 +17,7 @@ def adb_screenshot(save_path="screen.png", device="127.0.0.1:16384"):
     device_temp_path = "/sdcard/screen_temp.png"
     
     try:
-        # 截取屏幕并保存到设备临时路径（指定设备）
+        # 截取屏幕并保存到设备临时路径
         subprocess.run(
             f"adb -s {device} shell screencap -p {device_temp_path}",
             shell=True,
@@ -24,7 +26,7 @@ def adb_screenshot(save_path="screen.png", device="127.0.0.1:16384"):
             stderr=subprocess.PIPE
         )
         
-        # 将设备上的临时截图拉取到本地（指定设备）
+        # 将设备上的临时截图拉取到本地
         subprocess.run(
             f"adb -s {device} pull {device_temp_path} {save_path}",
             shell=True,
@@ -37,7 +39,7 @@ def adb_screenshot(save_path="screen.png", device="127.0.0.1:16384"):
         
     finally:
         try:
-            # 清理设备上的临时文件（指定设备）
+            # 清理设备上的临时文件
             subprocess.run(
                 f"adb -s {device} shell rm {device_temp_path}",
                 shell=True,
@@ -51,5 +53,4 @@ def adb_screenshot(save_path="screen.png", device="127.0.0.1:16384"):
     return save_path
 
 if __name__ == "__main__":
-    # 调用时可直接使用默认设备，也可通过参数指定其他设备
     adb_screenshot("screenshot.png")
